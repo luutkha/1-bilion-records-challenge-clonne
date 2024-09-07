@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class CreateMeasurements {
 
-    private static final Path MEASUREMENT_FILE = Path.of("./measurements.txt");
+    private static final Path MEASUREMENT_FILE = Path.of("./measurements_50mil.txt");
 
     private record WeatherStation(String id, double meanTemperature) {
         double measurement() {

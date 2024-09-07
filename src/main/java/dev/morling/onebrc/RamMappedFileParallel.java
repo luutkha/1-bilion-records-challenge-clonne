@@ -3,7 +3,9 @@ package dev.morling.onebrc;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -19,15 +21,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * This class processes a large file in parallel, reading it in chunks and processing each chunk concurrently.
- */
-public class ParallelFileProcessor {
+public class RamMappedFileParallel {
 
     // The number of threads to use in the thread pool, based on the number of available processors
 //    private static final int THREAD_POOL_SIZE = Runtime.getRuntime().availableProcessors() * 15;
 
     // The size of each chunk of the file to read and process
+    private static final int CHUNK_SIZE = 1024 * 1024 /2; // 1MB per chunk
 
     /**
      * The main entry point of the program.
@@ -41,9 +41,9 @@ public class ParallelFileProcessor {
         String outPutFilePath = Path.of("out_chunk.txt").toString();
         ConcurrentHashMap<String, AtomicReference<ValueHolder>> map = new ConcurrentHashMap<>();
         List<Long[]> bufferPositions = new ArrayList<>();
-        // Create a thread pool with the specified number of threads
         int availableCores = Runtime.getRuntime().availableProcessors();
 
+        // Create a thread pool with the specified number of threads
         ExecutorService executorService = Executors.newFixedThreadPool(availableCores);
 
         try (FileChannel fileChannel = FileChannel.open(Paths.get(filePath), StandardOpenOption.READ)) {
@@ -118,7 +118,9 @@ public class ParallelFileProcessor {
     }
 
     private static void openAndReadFileByChunk(String filePath, List<Long[]> bufferPositions, ExecutorService executorService, ConcurrentHashMap<String, AtomicReference<ValueHolder>> map) {
-        try (FileChannel fileChannel = FileChannel.open(Paths.get(filePath), StandardOpenOption.READ)) {
+        try (RandomAccessFile file = new RandomAccessFile(filePath, "r");
+             FileChannel fileChannel = file.getChannel()) {
+
             bufferPositions.stream().parallel().forEach(bufferPosition -> {
                 ByteBuffer buffer = null;
                 try {
@@ -129,9 +131,13 @@ public class ParallelFileProcessor {
                 ByteBuffer finalBuffer = buffer;
                 executorService.submit(() -> processChunk(finalBuffer, map, bufferPosition[0], bufferPosition[1]));
             });
+
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     private static void writeResultsToFile(ConcurrentHashMap<String, AtomicReference<ValueHolder>> map, String outPutFilePath) {
@@ -195,5 +201,3 @@ public class ParallelFileProcessor {
     }
 
 }
-
-

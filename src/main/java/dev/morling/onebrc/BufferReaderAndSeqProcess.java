@@ -1,43 +1,24 @@
 package dev.morling.onebrc;
 
 import java.io.*;
-import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CalculateAverageLuutkha {
+public class BufferReaderAndSeqProcess {
 
     public static void main(String[] args) {
         long startTime = System.currentTimeMillis();
         String filePath = Path.of("./measurements.txt").toString();
         String outPutFilePath = Path.of("out.txt").toString();
         Map<String, ValueHolder> map = new HashMap<>();
+
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(";");
-                String city = parts[0];
-                double valueOnDouble = Math.round(Double.parseDouble(parts[1]) * 10);
-                int value = (int) valueOnDouble;
-
-                ValueHolder valueHolder = new ValueHolder(value, value,value);
-                if (map.containsKey(city)) {
-                    valueHolder = map.get(city);
-                    valueHolder.max = Math.max(valueHolder.max, value);
-                    valueHolder.min = Math.min(valueHolder.min, value);
-                    valueHolder.sumForMean += value  ;
-                    valueHolder.count = valueHolder.count + 1;
-
-                } else {
-                    valueHolder.max = Math.max(valueHolder.max, value);
-                    valueHolder.min = Math.min(valueHolder.min, value);
-                    valueHolder.sumForMean = value;
-                    valueHolder.count = 1;
-                    map.put(city, valueHolder);
-                }
+               processLine(line, map);
 
             }
         } catch (IOException e) {
@@ -63,6 +44,29 @@ public class CalculateAverageLuutkha {
         // Tính toán thời gian thực thi
         long executionTime = endTime - startTime;
         System.out.println("Thời gian thực thi: " + executionTime + " milliseconds");
+    }
+
+    private static void processLine(String line, Map<String, ValueHolder> map) {
+        String[] parts = line.split(";");
+        String city = parts[0];
+        double valueOnDouble = Math.round(Double.parseDouble(parts[1]) * 10);
+        int value = (int) valueOnDouble;
+
+        ValueHolder valueHolder = new ValueHolder(value, value,value);
+        if (map.containsKey(city)) {
+            valueHolder = map.get(city);
+            valueHolder.max = Math.max(valueHolder.max, value);
+            valueHolder.min = Math.min(valueHolder.min, value);
+            valueHolder.sumForMean += value  ;
+            valueHolder.count = valueHolder.count + 1;
+
+        } else {
+            valueHolder.max = Math.max(valueHolder.max, value);
+            valueHolder.min = Math.min(valueHolder.min, value);
+            valueHolder.sumForMean = value;
+            valueHolder.count = 1;
+            map.put(city, valueHolder);
+        }
     }
 }
 

@@ -26,6 +26,7 @@ public class CalculateAverage_anandmattikopp {
     private static final String FILE = "./measurements.txt";
 
     public static void main(String[] args) throws IOException {
+        long startTime = System.currentTimeMillis();
         Map<String, StationStatistics> stationStatisticsMap = Files.lines(Paths.get(FILE)).parallel()
                 .map(entry -> {
                     String[] tokens = entry.split(";");
@@ -38,6 +39,9 @@ public class CalculateAverage_anandmattikopp {
                                 StationStatistics::merge));
 
         System.out.println(new TreeMap<>(stationStatisticsMap));
+        long endTime = System.currentTimeMillis();
+        long executionTime = endTime - startTime;
+        System.out.println("Thời gian thực thi: " + executionTime + " milliseconds");
     }
 
     private record Station(String stationName, double temperature) {
